@@ -10,7 +10,7 @@ if [ ! -d "${HOME}"/.dev-tools/pre-commit-docker ]; then
   git clone git@github.com:philipdelorenzo/pre-commit-docker.git "${HOME}"/.dev-tools/pre-commit-docker
 else
   rm -rf "${HOME}"/.dev-tools/pre-commit-docker
-  git clone git@github.com:philipdelorenzo/pre-commit-docker.git "${HOME}"/.dev-tools/pre-commit-docker
+  cd "${HOME}"/.dev-tools/pre-commit-docker || exit 1 && git checkout master && git reset --hard HEAD && git pull
   
   # We want to get the configurations (you can modify) for linters and put them in the root of this repo.
   echo "Ensuring the latest configs in the current repo..."
@@ -30,7 +30,15 @@ else
 fi
 
 echo "Ensuring latest version of the Docker image..."
-cd "${HOME}"/.dev-tools/pre-commit-docker || exit 1 && docker build . -t philipdelorenzo/dev-tools:latest -q
+cd "${HOME}"/.dev-tools/pre-commit-docker || exit 1 && docker build . -t philipdelorenzo/dev-tools:latest -q &
+PID=$!
+i=1
+sp="/-\|"
+echo -n ' '
+while [ -d /proc/$PID ]
+do
+  printf "\b${sp:i++%${#sp}:1}"
+done
 
 # We want to run this docker image as a container in the context of the location of this file ~> ${REPO}/.githooks/*
 docker run \
